@@ -3,10 +3,10 @@ local request = syn and syn.request or http_request
     or http and http.request or request
 
 local Discord: table = {
-    Webhook = {};
+    webhook = {color={}};
 }
 
-function Discord:FocusApp()
+function Discord:focusApp()
     local Response = request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
@@ -21,7 +21,7 @@ function Discord:FocusApp()
     return Response
 end
 
-function Discord:Invite(invCode: string)
+function Discord:invite(invCode: string)
     local Response = request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
@@ -59,8 +59,17 @@ function Discord:deepLink(type: string, guildId: string?, channelId: string?, me
     return Response 
 end
 
-function Discord:Focus(guildId: string?, channelId: string?, messageId: string?)
+function Discord:focus(guildId: string?, channelId: string?, messageId: string?)
     return self :deepLink("Channel", guildId, channelId, messageId)
+end
+
+function Discord.webhook.color:fromHex(hex: string)
+    local r, g, b = hex :match "(%x%x)(%x%x)(%x%x)"
+    return tonumber(r, 16) * 65536 + tonumber(g, 16) * 256 + tonumber(b, 16) 
+end
+
+function Discord.webhook.color:fromRGB(r: number, g: number, b: number)
+    return r * 65536 + g * 256 + b
 end
 
 return Discord
