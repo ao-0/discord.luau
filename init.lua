@@ -59,6 +59,24 @@ function Discord:deepLink(type: string, guildId: string?, channelId: string?, me
     return Response 
 end
 
+function Discord:getAttachment(messageLink: string)
+    return request {
+        Url = messageLink,
+        Method = "GET", Headers = {
+            ["Content-Type"] = "application/json",
+        }
+    }.Body
+end
+
+function Discord:widgetInfo(guildId: string)
+    return httpService:JSONDecode(request {
+        Url = "https://discord.com/api/v8/guilds/" .. guildId .. "/widget.json",
+        Method = "GET", Headers = {
+            ["Content-Type"] = "application/json",
+        }
+    }.Body)
+end
+
 function Discord:focus(guildId: string?, channelId: string?, messageId: string?)
     return self :deepLink("Channel", guildId, channelId, messageId)
 end
