@@ -1,48 +1,92 @@
-<div align="center">
+local httpService = game:GetService "HttpService"
+local request = syn and syn.request or http_request
+    or http and http.request or request
 
-# discord.luau
+local library = {}
+function library:focusApp()
+    return request {
+        Url = "http://127.0.0.1:6463/rpc?v=1",
+        Method = "POST", Headers = {
+            ["Content-Type"] = "application/json",
+            ["Origin"] = "https://discord.com"
+        }, Body = httpService :JSONEncode {
+            cmd = "BROWSER_HANDOFF", args = {},
+            nonce = httpService :GenerateGUID(false)
+        }
+    }
+    
+    return response
+end
 
-discord.luau is library that uses websockets to control a discord client.
+function library:invite(invCode)
+    return request {
+        Url = "http://127.0.0.1:6463/rpc?v=1",
+        Method = "POST", Headers = {
+            ["Content-Type"] = "application/json",
+            ["Origin"] = "https://discord.com"
+        }, Body = httpService :JSONEncode {
+            cmd = "INVITE_BROWSER", args = {code = invCode},
+            nonce = httpService :GenerateGUID(false)
+        }
+    }
 
-</div>
+    return response
+end
 
-## Documentation
-### library:focusApp()
-Focuses application.
-```lua
-library:focusApp()
-```
+function library:deepLink(type, guildId, channelId, messageId, search)
+    return request {
+        Url = "http://127.0.0.1:6463/rpc?v=1",
+        Method = "POST", Headers = {
+            ["Content-Type"] = "application/json",
+            ["Origin"] = "https://discord.com"
+        }, Body = httpService :JSONEncode {
+            cmd = "DEEP_LINK", args = {
+                type = string.upper(type),
+                params = {
+                    guildId = guildId or "@me",
+                    channelId = channelId or "",
+                    messageId = messageId or "",
+                    search = search or "",
+                    fingerprint = httpService :GenerateGUID(false)
+                }
+            }, nonce = httpService :GenerateGUID(false)
+        }
+    }
+end
 
-### library:invite(invCode)
-Joins a server using an invite code.
-```lua
-library:invite("cats")
-```
+function library:getAttachment(messageLink)
+    return request {
+        Url = messageLink,
+        Method = "GET", Headers = {
+            ["Content-Type"] = "application/json",
+        }
+    }.Body
+end
 
-### library:deepLink(type: string, guildId: string?, channelId: string?, messageId: string?, search: string?)
+function library:widgetInfo(guildId)
+    return httpService:JSONDecode(request {
+        Url = "https://discord.com/api/v8/guilds/" .. guildId .. "/widget.json",
+        Method = "GET", Headers = {
+            ["Content-Type"] = "application/json",
+        }
+    }.Body)
+end
 
-Opens app on a specific page.
-```lua
-library:deepLink("channel", "@me")
-```
+function library:focus(guildId, channelId, messageId)
+    return self :deepLink("Channel", guildId, channelId, messageId)
+end
 
-### library:getAttachment(messageLink)
-Gets the attachment from a message link.
-```lua
-library:getAttachment("https://discord.com/channels/1234567890/1234567890/1234567890.lua")
-```
+function library:openGift(giftId)
+    return request {
+        Url = "http://127.0.0.1:6463/rpc?v=1",
+        Method = "POST", Headers = {
+            ["Content-Type"] = "application/json",
+            ["Origin"] = "https://discord.com"
+        }, Body = httpService :JSONEncode {
+            cmd = "GIFT_CODE_BROWSER", args = {code = giftId},
+            nonce = httpService :GenerateGUID(false)
+        }
+    }
+end
 
-### library:widgetInfo(guildId)
-Gets the widget info for a server.
-```lua
-library:widgetInfo("1234567890")
-```
-
-### library:openGift(giftId)
-Opens a gift.
-```lua
-library:openGift("1234567890")
-```
-
-## Contribution
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+return library
