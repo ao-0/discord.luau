@@ -1,13 +1,10 @@
-local httpService = game :GetService "HttpService"
+local httpService = game:GetService "HttpService"
 local request = syn and syn.request or http_request
     or http and http.request or request
 
-local Discord: table = {
-    webhook = {color={}};
-}
-
-function Discord:focusApp()
-    local Response = request {
+local library = {}
+function library:focusApp()
+    return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
@@ -17,12 +14,12 @@ function Discord:focusApp()
             nonce = httpService :GenerateGUID(false)
         }
     }
-
-    return Response
+    
+    return response
 end
 
-function Discord:invite(invCode: string)
-    local Response = request {
+function library:invite(invCode)
+    return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
@@ -33,11 +30,11 @@ function Discord:invite(invCode: string)
         }
     }
 
-    return Response
+    return response
 end
 
-function Discord:deepLink(type: string, guildId: string?, channelId: string?, messageId: string?, search: string?)
-    local Response = request {
+function library:deepLink(type, guildId, channelId, messageId, search)
+    return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
@@ -55,11 +52,9 @@ function Discord:deepLink(type: string, guildId: string?, channelId: string?, me
             }, nonce = httpService :GenerateGUID(false)
         }
     }
-
-    return Response 
 end
 
-function Discord:getAttachment(messageLink: string)
+function library:getAttachment(messageLink)
     return request {
         Url = messageLink,
         Method = "GET", Headers = {
@@ -68,7 +63,7 @@ function Discord:getAttachment(messageLink: string)
     }.Body
 end
 
-function Discord:widgetInfo(guildId: string)
+function library:widgetInfo(guildId)
     return httpService:JSONDecode(request {
         Url = "https://discord.com/api/v8/guilds/" .. guildId .. "/widget.json",
         Method = "GET", Headers = {
@@ -77,17 +72,21 @@ function Discord:widgetInfo(guildId: string)
     }.Body)
 end
 
-function Discord:focus(guildId: string?, channelId: string?, messageId: string?)
+function library:focus(guildId, channelId, messageId)
     return self :deepLink("Channel", guildId, channelId, messageId)
 end
 
-function Discord.webhook.color:fromHex(hex: string)
-    local r, g, b = hex :match "(%x%x)(%x%x)(%x%x)"
-    return tonumber(r, 16) * 65536 + tonumber(g, 16) * 256 + tonumber(b, 16) 
+function library:openGift(giftId)
+    return request {
+        Url = "http://127.0.0.1:6463/rpc?v=1",
+        Method = "POST", Headers = {
+            ["Content-Type"] = "application/json",
+            ["Origin"] = "https://discord.com"
+        }, Body = httpService :JSONEncode {
+            cmd = "GIFT_CODE_BROWSER", args = {code = giftId},
+            nonce = httpService :GenerateGUID(false)
+        }
+    }
 end
 
-function Discord.webhook.color:fromRGB(r: number, g: number, b: number)
-    return r * 65536 + g * 256 + b
-end
-
-return Discord
+return library
