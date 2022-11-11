@@ -14,8 +14,6 @@ function library:focusApp()
             nonce = httpService :GenerateGUID(false)
         }
     }
-    
-    return response
 end
 
 function library:invite(invCode)
@@ -29,8 +27,6 @@ function library:invite(invCode)
             nonce = httpService :GenerateGUID(false)
         }
     }
-
-    return response
 end
 
 function library:deepLink(type, guildId, channelId, messageId, search)
