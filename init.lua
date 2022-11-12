@@ -1,52 +1,63 @@
 local httpService = game:GetService "HttpService"
-local request = syn and syn.request or http_request
-    or http and http.request or request
+local jsonEncode, generateGuid, jsonDecode = httpService.JSONEncode, httpService.GenerateGUID, httpService.JSONDecode
+local request = syn and syn.request or http_request or http and http.request or request
 
-local library = {}
-function library:focusApp()
+type WidgetInfo = {
+    id: string,
+    name: string,
+    instant_invite: string,
+    channels: Array,
+    members: Array,
+    presence_count: number,
+}
+
+type Discord = {
+    focusApp = () -> void,
+    invite = (string) -> void,
+    deepLink = (string) -> void,
+    getAttachment = (string) -> string,
+    widgetInfo = (string) -> WidgetInfo,
+    openGift = (string) -> void
+}
+
+local Library: Discord = {};
+
+function Library:focusApp()
     return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
             ["Origin"] = "https://discord.com"
-        }, Body = httpService :JSONEncode {
+        }, Body = jsonEncode(httpService, {
             cmd = "BROWSER_HANDOFF", args = {},
-            nonce = httpService :GenerateGUID(false)
-        }
+            nonce = generateGuid(httpService, false)
+        })
     }
 end
 
-function library:invite(invCode)
+function Library:invite(code)
     return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
             ["Origin"] = "https://discord.com"
-        }, Body = httpService :JSONEncode {
-            cmd = "INVITE_BROWSER", args = {code = invCode},
-            nonce = httpService :GenerateGUID(false)
-        }
+        }, Body = jsonEncode(httpService, {
+            cmd = "INVITE_BROWSER", args = {code = code},
+            nonce = generateGuid(httpService, false)
+        })
     }
 end
 
-function library:deepLink(type, guildId, channelId, messageId, search)
+function Library:deepLink(type, params)
     return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
             ["Origin"] = "https://discord.com"
-        }, Body = httpService :JSONEncode {
-            cmd = "DEEP_LINK", args = {
-                type = string.upper(type),
-                params = {
-                    guildId = guildId or "@me",
-                    channelId = channelId or "",
-                    messageId = messageId or "",
-                    search = search or "",
-                    fingerprint = httpService :GenerateGUID(false)
-                }
-            }, nonce = httpService :GenerateGUID(false)
-        }
+        }, Body = jsonEncode(httpService, {
+            cmd = "DEEP_LINK", args = {type = type:upper(), params = params},
+            nonce = generateGuid(httpService, false)
+        })
     }
 end
 
@@ -54,35 +65,33 @@ function library:getAttachment(messageLink)
     return request {
         Url = messageLink,
         Method = "GET", Headers = {
-            ["Content-Type"] = "application/json",
+            ["Content-Type"] = "application/json"
         }
     }.Body
 end
 
-function library:widgetInfo(guildId)
-    return httpService:JSONDecode(request {
-        Url = "https://discord.com/api/v8/guilds/" .. guildId .. "/widget.json",
+function Library:widgetInfo(id)
+    local info: WidgetInfo = jsonDecode(httpService, request {
+        Url = "https://discord.com/api/v8/guilds/" .. id .. "/widget.json",
         Method = "GET", Headers = {
-            ["Content-Type"] = "application/json",
+            ["Content-Type"] = "application/json"
         }
     }.Body)
+
+    return info
 end
 
-function library:focus(guildId, channelId, messageId)
-    return self :deepLink("Channel", guildId, channelId, messageId)
-end
-
-function library:openGift(giftId)
+function Library:openGift(code)
     return request {
         Url = "http://127.0.0.1:6463/rpc?v=1",
         Method = "POST", Headers = {
             ["Content-Type"] = "application/json",
             ["Origin"] = "https://discord.com"
-        }, Body = httpService :JSONEncode {
+        }, Body = jsonEncode(httpService, {
             cmd = "GIFT_CODE_BROWSER", args = {code = giftId},
-            nonce = httpService :GenerateGUID(false)
-        }
+            nonce = generateGuid(httpService, false)
+        })
     }
 end
 
-return library
+return Library
